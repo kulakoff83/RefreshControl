@@ -12,24 +12,43 @@ class MasterViewController: UITableViewController {
 
     var detailViewController: DetailViewController? = nil
     var objects = [AnyObject]()
-
+    var customRefreshControl : IZRefreshControl!
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         self.navigationItem.leftBarButtonItem = self.editButtonItem()
 
-        let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "insertNewObject:")
+        let addButton = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: #selector(MasterViewController.insertNewObject(_:)))
         self.navigationItem.rightBarButtonItem = addButton
         if let split = self.splitViewController {
             let controllers = split.viewControllers
             self.detailViewController = (controllers[controllers.count-1] as! UINavigationController).topViewController as? DetailViewController
         }
+        //
+        customRefreshControl = IZRefreshControl(frame: self.view.bounds)
+        customRefreshControl?.tintColor = UIColor.clearColor()
+        customRefreshControl.backgroundColor = UIColor.clearColor()
+        customRefreshControl.addTarget(self, action: #selector(MasterViewController.refresh), forControlEvents: UIControlEvents.ValueChanged)
+        self.refreshControl = customRefreshControl
+        //self.refreshControl = UIRefreshControl()
     }
+    
+    func refresh(){
+        let popTime = dispatch_time(DISPATCH_TIME_NOW, Int64(3.0 * Double(NSEC_PER_SEC)));
+        dispatch_after(popTime, dispatch_get_main_queue()) { () -> Void in
+            self.customRefreshControl.endRefreshing()
+        }
+    }
+    
+    override func scrollViewDidScroll(scrollView: UIScrollView) {
+        customRefreshControl.scrollViewDidScroll(scrollView)
+    }
+        
 
     override func viewWillAppear(animated: Bool) {
-        self.clearsSelectionOnViewWillAppear = self.splitViewController!.collapsed
         super.viewWillAppear(animated)
+        self.clearsSelectionOnViewWillAppear = self.splitViewController!.collapsed
     }
 
     override func didReceiveMemoryWarning() {
